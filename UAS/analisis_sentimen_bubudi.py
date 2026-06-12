@@ -4,14 +4,16 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from transformers import pipeline
 from dotenv import load_dotenv
 
 load_dotenv()
 
-HF_TOKEN = os.getenv("HF_TOKEN")
+HF_TOKEN = os.getenv("HF_TOKEN1")
 UsernameIG = os.getenv("IG_USER")
-PasswordIG = os.getenv("IG_PASS")
+PasswordIG = os.getenv("IG_PASSWORD")
 
 device = 0 if torch.cuda.is_available() else -1
 
@@ -55,6 +57,19 @@ def clean_comment(comment):
 
     return comment
 
+def open_comments(driver):
+    wait = WebDriverWait(driver, 10)
+
+    try:
+        comment_btn = wait.until(EC.element_to_be_clickable(
+            (By.CSS_SELECTOR, "svg[aria-label='Comment']")
+        ))
+        comment_btn.click()
+        time.sleep(2)
+        return True
+    except Exception as e:
+        pass
+
 def scrape_instagram_comments():
     driver = webdriver.Chrome()
 
@@ -84,10 +99,17 @@ def scrape_instagram_comments():
 
         driver.get("https://www.instagram.com/reels/DZKW5iphoK6/")
         time.sleep(5)
+        wait = WebDriverWait(driver, 10)
 
         try:
+            comment_btn = wait.until(EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "svg[aria-label='Comment']")
+            ))
+            comment_btn.click()
+            time.sleep(2)
+
             scroll_div = driver.find_element(
-                By.CLASS_NAME, "x5yr21d.xw2csxc.x1odjw0f.x1n2onr6"
+                By.CLASS_NAME, ".x78zum5.xdt5ytf.x1iyjqo2.xh8yej3"
             )
             last_height = driver.execute_script(
                 "return arguments[0].scrollHeight", scroll_div
@@ -103,6 +125,7 @@ def scrape_instagram_comments():
                 if new_height == last_height:
                     break
                 last_height = new_height
+
         except Exception as e:
             print(f"Scroll div tidak ditemukan, lanjut tanpa scroll: {e}")
 
@@ -158,4 +181,4 @@ df = pd.DataFrame(id_results)
 df.to_csv("comments_en_sentiment.csv", index=False, encoding="utf-8-sig")
 
 print("\n🎉 Pipeline selesai.")
-print("File saved: comments_en_sentiment.csv")
+print("File saved: comments_id_sentiment.csv")
