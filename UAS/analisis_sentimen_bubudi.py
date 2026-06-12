@@ -5,7 +5,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from transformers import pipeline
-from deep_translator import GoogleTranslator
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,17 +15,9 @@ PasswordIG = os.getenv("IG_PASS")
 
 device = 0 if torch.cuda.is_available() else -1
 
-en_model = pipeline(
-    "text-classification",
-    model="cardiffnlp/twitter-roberta-base-sentiment-latest",
-    token=HF_TOKEN,
-    device=device
-)
+id_model = pipeline("text-classification", model="crypter70/IndoBERT-Sentiment-Analysis", token=HF_TOKEN, device=device)
 
-translator = GoogleTranslator(
-    source='id',
-    target='en'
-)
+label_map = {"LABEL_0": "negative", "LABEL_1": "positive"}
 
 FILTER_UI = [
 
@@ -63,22 +54,6 @@ def clean_comment(comment):
         return None
 
     return comment
-
-def translate_comment(comment):
-
-    try:
-
-        translasi = translator.translate(comment)
-
-        print(f"Translation: {translasi}")
-
-        return translasi
-
-    except Exception as e:
-
-        print(f"translation Error: {e}")
-
-        return comment
 
 def scrape_instagram_comments():
     driver = webdriver.Chrome()
@@ -205,37 +180,23 @@ def scrape_instagram_comments():
 
 comments = scrape_instagram_comments()
 
-en_results = []
+id_results = []
 
 print("Starting sentiment analysis...")
 
 for txt in comments:
-
     try:
-        time.sleep(0.4)
+        res_id = id_model(txt)[0]
+        sent_id = label_map.get(res_id["label"], res_id["label"].lower())
+        conf_id = round(res_id["score"], 4)
 
-        translated = translate_comment(txt)
-        res_en = en_model(translated)[0]
-
-        sentiment = res_en["label"]
-        nilai = round(res_en["score"], 4)
-
-        print(
-            f"Sentiment: {sentiment} "
-            f"Nilai: {nilai}"
-        )
-
-        en_results.append({"original_comment": txt, "translated_comment": translated, "sentiment_en": sentiment, "confidence_en": nilai})
+        id_results.append({"original_comment": txt, "sentiment_id": sent_id, "confidence_id": conf_id})
 
     except Exception as e:
-        print(
-            f"⚠️ Gagal memproses: '{txt}' | Error: {e}"
-        )
+        print(f"⚠️ Gagal memproses: '{txt}' | Error: {e}")
 
-df = pd.DataFrame(en_results)
+df = pd.DataFrame(id_results)
 df.to_csv("comments_en_sentiment.csv", index=False, encoding="utf-8-sig")
 
 print("\n🎉 Pipeline selesai.")
 print("File saved: comments_en_sentiment.csv")
-
-assdasd
