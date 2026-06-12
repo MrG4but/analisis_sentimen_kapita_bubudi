@@ -82,6 +82,9 @@ def scrape_instagram_comments():
             "Jika CAPTCHA muncul, selesaikan lalu tekan ENTER..."
         )
 
+        driver.get("https://www.instagram.com/reels/DZKW5iphoK6/")
+        time.sleep(5)
+
         try:
             scroll_div = driver.find_element(
                 By.CLASS_NAME, "x5yr21d.xw2csxc.x1odjw0f.x1n2onr6"
