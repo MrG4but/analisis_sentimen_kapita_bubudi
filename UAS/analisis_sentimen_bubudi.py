@@ -237,3 +237,5 @@ df.to_csv("comments_en_sentiment.csv", index=False, encoding="utf-8-sig")
 
 print("\n🎉 Pipeline selesai.")
 print("File saved: comments_en_sentiment.csv")
+
+assdasd
