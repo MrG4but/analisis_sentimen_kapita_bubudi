@@ -82,101 +82,57 @@ def scrape_instagram_comments():
             "Jika CAPTCHA muncul, selesaikan lalu tekan ENTER..."
         )
 
-        hashtag = "indomie"
-        driver.get(
-            f"https://www.instagram.com/explore/tags/{hashtag}/"
-        )
-        time.sleep(5)
-
-        for i in range(1):
-            driver.execute_script(
-                "window.scrollTo(0, document.body.scrollHeight);"
+        try:
+            scroll_div = driver.find_element(
+                By.CLASS_NAME, "x5yr21d.xw2csxc.x1odjw0f.x1n2onr6"
             )
-
-            time.sleep(4)
-
-        post_links = set()
-
-        posts = driver.find_elements(
-            By.XPATH,
-            "//a[contains(@href, '/p/')]"
-        )
-
-        for post in posts:
-
-            href = post.get_attribute("href")
-
-            if href:
-                post_links.add(href)
-
-        print(f"\nCollected {len(post_links)} posts")
-
-        for index, link in enumerate(list(post_links)[:10]):
-
-            print(f"\nOpening post {index+1}")
-            print(link)
-
-            driver.get(link)
-
-            time.sleep(5)
-
-            # scroll comment section
-            for _ in range(2):
+            last_height = driver.execute_script(
+                "return arguments[0].scrollHeight", scroll_div
+            )
+            while True:
                 driver.execute_script(
-                    "window.scrollTo(0, document.body.scrollHeight);"
+                    "arguments[0].scrollTop = arguments[0].scrollHeight", scroll_div
                 )
-
                 time.sleep(2)
+                new_height = driver.execute_script(
+                    "return arguments[0].scrollHeight", scroll_div
+                )
+                if new_height == last_height:
+                    break
+                last_height = new_height
+        except Exception as e:
+            print(f"Scroll div tidak ditemukan, lanjut tanpa scroll: {e}")
 
-            soup = BeautifulSoup(
-                driver.page_source,
-                "html.parser"
-            )
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        raw_texts = [span.get_text() for span in soup.find_all("span")]
 
-            raw_texts = [
-                span.get_text()
-                for span in soup.find_all("span")]
+        for text in raw_texts:
 
-            print(
-                f"💬 Raw texts found: {len(raw_texts)}"
-            )
+            cleaned = clean_comment(text)
 
-            valid_comments = 0
+            if not cleaned:
+                continue
 
-            for text in raw_texts:
+            if cleaned.lower() in seen:
+                continue
 
-                cleaned = clean_comment(text)
+            seen.add(cleaned.lower())
+            comments.append(cleaned)
 
-                if not cleaned:
-                    continue
-
-                if cleaned.lower() in seen:
-                    continue
-
-                seen.add(cleaned.lower())
-                comments.append(cleaned)
-
-                valid_comments += 1
-
-                print(f"Comment: {cleaned}")
+            print(f"Comment: {cleaned}")
 
             print(
-                f"Valid comments: {valid_comments}"
+                f"\nTotal comments collected: {len(comments)}"
             )
-
-        print(
-            f"\nTotal comments collected: {len(comments)}"
-        )
-
-        return comments
 
     finally:
-
         input(
             "\nTekan ENTER untuk menutup browser..."
         )
 
         driver.quit()
+
+    return comments
 
 comments = scrape_instagram_comments()
 
