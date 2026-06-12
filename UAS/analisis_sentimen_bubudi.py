@@ -106,10 +106,10 @@ def scrape_instagram_comments():
                 (By.CSS_SELECTOR, "svg[aria-label='Comment']")
             ))
             comment_btn.click()
-            time.sleep(2)
+            time.sleep(10)
 
             scroll_div = driver.find_element(
-                By.CLASS_NAME, ".x78zum5.xdt5ytf.x1iyjqo2.xh8yej3"
+                By.XPATH, "//div[@style and contains(@style, 'minHeight')]"
             )
             last_height = driver.execute_script(
                 "return arguments[0].scrollHeight", scroll_div
