@@ -33,7 +33,7 @@ def clean_comment(comment):
 
     comment = re.sub(r"http\S+", "", comment)
     comment = re.sub(r"@\w+", "", comment)
-    comment = re.sub(r"#\w+", "", comment)
+    comment = re.sub(r"@[\w.]+", "", comment)
 
     lower_comment = comment.lower()
 
@@ -69,6 +69,9 @@ def open_comments(driver):
         return True
     except Exception as e:
         pass
+
+def is_username(teks):
+    return bool(re.match(r'^[\w.]+$', teks))
 
 def scrape_instagram_comments():
     driver = webdriver.Chrome()
@@ -114,6 +117,9 @@ def scrape_instagram_comments():
             last_height = driver.execute_script(
                 "return arguments[0].scrollHeight", scroll_div
             )
+
+            no_change_count = 0
+
             while True:
                 driver.execute_script(
                     "arguments[0].scrollTop = arguments[0].scrollHeight", scroll_div
@@ -122,34 +128,53 @@ def scrape_instagram_comments():
                 new_height = driver.execute_script(
                     "return arguments[0].scrollHeight", scroll_div
                 )
+
                 if new_height == last_height:
-                    break
+                    no_change_count += 1
+                    if no_change_count >= 3:  # fungsinya kalo scrollnya udah 3x tapi nda berubah, ini bakalan stopin scrolnya
+                        break
+                else:
+                    no_change_count = 0
+
                 last_height = new_height
+                print(f"Scrolling... height: {new_height}")  # hapus ja ni nanti
 
         except Exception as e:
             print(f"Scroll div tidak ditemukan, lanjut tanpa scroll: {e}")
 
-        soup = BeautifulSoup(driver.page_source, "html.parser")
-        raw_texts = [span.get_text() for span in soup.find_all("span")]
+        dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
+        all_spans = dialog.find_elements(By.XPATH, ".//span[@dir='auto']")
 
-        for text in raw_texts:
+        skip_keywords = ['Comments', 'Reply', 'View all', 'likes', 'follow', 'Like' 'See translation']
 
-            cleaned = clean_comment(text)
+        for span in all_spans:
+            teks = span.text.strip()
 
+            if not teks:
+                continue
+            if len(teks) < 5:
+                continue
+            if any(kw.lower() in teks.lower() for kw in skip_keywords):
+                continue
+
+            if is_username(teks):
+                continue
+
+            if re.match(r'^\d+[wdhm]', teks):
+                continue
+
+            if teks.lower() in seen:
+                continue
+
+            cleaned = clean_comment(teks)
             if not cleaned:
                 continue
 
-            if cleaned.lower() in seen:
-                continue
-
-            seen.add(cleaned.lower())
+            seen.add(teks.lower())
             comments.append(cleaned)
-
             print(f"Comment: {cleaned}")
 
-            print(
-                f"\nTotal comments collected: {len(comments)}"
-            )
+        print(f"\nTotal comments collected: {len(comments)}")
 
     finally:
         input(
