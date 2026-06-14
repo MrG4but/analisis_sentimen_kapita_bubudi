@@ -309,8 +309,14 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
     ig_freq      = Counter(all_ig_words)
     publik_words = set([w for w, _ in ig_freq.most_common(20)])
 
-    only_media   = media_words - publik_words #apakah bisa dipindah
-    only_publik  = publik_words - media_words #apakah bisa dipindah
+    only_media = media_words
+    only_publik = publik_words
+
+    only_media_freq = [(w, artikel_freq[w]) for w in only_media]
+    only_media_freq = sorted(only_media_freq, key=lambda x: x[1], reverse=True)
+
+    only_publik_freq = [(w, ig_freq[w]) for w in only_publik]
+    only_publik_freq = sorted(only_publik_freq, key=lambda x: x[1], reverse=True)
 
     df_neg = df_ig[df_ig["sentiment"] == "negative"]
     df_pos = df_ig[df_ig["sentiment"] == "positive"]
@@ -335,16 +341,20 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
     print("\n" + "="*55)
     print(f"Sentimen Instagram (%): {sentiment_dist.to_dict()}")
     print(f"Sentimen Artikel   (%): {sentiment_artikel.to_dict()}")
-    print(f"Keyword di Artikel    : {list(only_media)[:10]}")
-    print(f"Keyword di Instagram  : {list(only_publik)[:10]}")
+    print(f"Overall Keyword Artikel:")
+    for word, count in only_media_freq[:10]:
+        print(f"  {word:<20} : {count}")
+    print(f"Overall Keyword Instagram:")
+    for word, count in only_publik_freq[:10]:
+        print(f"  {word:<20} : {count}")
 
     # Bar chart komparatif artikel vs IG — untuk slide PPT
-    # artikel_sentiment = df_artikel["sentiment"].value_counts()
-    # ig_sentiment      = df_ig["sentiment"].value_counts()
+    artikel_sentiment = df_artikel["sentiment"].value_counts(normalize=True).mul(100).round(1)
+    ig_sentiment = df_ig["sentiment"].value_counts(normalize=True).mul(100).round(1)
 
-    labels   = ["negative", 'neutral',  "positive"]
-    artikel_vals = [df_artikel['sentiment'].value_counts(normalize=True).get(l, 0) * 100 for l in labels]
-    ig_vals = [df_ig['sentiment'].value_counts(normalize=True).get(l, 0) * 100 for l in labels]
+    labels = ["negative", "neutral", "positive"]
+    artikel_vals = [artikel_sentiment.get(l, 0) for l in labels]
+    ig_vals = [ig_sentimesnt.get(l, 0) for l in labels]
 
     x     = range(len(labels))
     width = 0.35
@@ -364,10 +374,12 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
 
     # Simpan gap analysis
     df_gap = pd.DataFrame({
-        "only_in_media":  pd.Series(list(only_media)[:15]),
-        "only_in_public": pd.Series(list(only_publik)[:15])
+        "Top_Keyword_Artikel": [w for w, _ in only_media_freq[:15]],
+        "Frekuensi_Artikel": [c for _, c in only_media_freq[:15]],
+        "Top_Keyword_Instagram": [w for w, _ in only_publik_freq[:15]],
+        "Frekuensi_Instagram": [c for _, c in only_publik_freq[:15]],
     })
-    df_gap.to_csv("gap_analysis.csv", index=False, encoding="utf-8-sig")
+    df_gap.to_csv("Top_Words.csv", index=False, encoding="utf-8-sig")
 
     return sentiment_dist, sentiment_artikel, only_media, only_publik
 
@@ -387,5 +399,5 @@ if __name__ == "__main__":
     print("PIPELINE SELESAI. File yang dihasilkan:")
     print("Sentiment_Artikel.csv")
     print("Sentiment_Instagram.csv")
-    print("Gap_Analysis.csv")
+    print("Top_Words.csv")
     print("="*55)
