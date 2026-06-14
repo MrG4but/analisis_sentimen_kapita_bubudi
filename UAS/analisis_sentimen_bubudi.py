@@ -21,8 +21,7 @@ PasswordIG = os.getenv("IG_PASSWORD")
 
 device = 0 if torch.cuda.is_available() else -1
 id_model = pipeline("text-classification", model="crypter70/IndoBERT-Sentiment-Analysis", token=HF_TOKEN, device=device)
-label_map = {"LABEL_0": "negative", "LABEL_1": "positive"}
-
+label_map = {"LABEL_0": "negative", "LABEL_1": "neutral", "LABEL_2": "positive"}
 FILTER_UI = [
 
     "View all", "reply", "see translation", "likes", "like", "follow",
@@ -100,7 +99,7 @@ def fetch_article_text(url):
     article_div = max(clearfix_divs, key=lambda d: len(d.find_all('p')))
 
     paragraphs = article_div.find_all('p')
-    skip_starts = ['baca juga', 'artikel ini', 'simak breaking news', 'dapatkan update' 'freepik']
+    skip_starts = ['baca juga', 'artikel ini', 'simak breaking news', 'dapatkan update', 'freepik']
 
     texts = []
     for p in paragraphs:
@@ -186,7 +185,7 @@ def scrape_instagram_comments(post_url: str) -> list:
         dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
         all_spans = dialog.find_elements(By.XPATH, ".//span[@dir='auto']")
 
-        skip_keywords = ['Comments', 'Reply', 'View all', 'likes', 'follow', 'Like' 'See translation']
+        skip_keywords = ['Comments', 'Reply', 'View all', 'likes', 'follow', 'Like', 'See translation']
 
         for span in all_spans:
             teks = span.text.strip()
@@ -249,21 +248,10 @@ def analisis_sentimen_artikel(paragraphs: list) -> pd.DataFrame:
     df_artikel = pd.DataFrame(results)
     df_artikel.to_csv("Sentiment_Artikel.csv", index=False, encoding="utf-8-sig")
 
-    counts = df_artikel['sentiment'].value_counts()
-    plt.figure(figsize=(6, 4))
-    plt.bar(counts.index, counts.values, color=['green', 'red'])
-    plt.xlabel('Sentimen')
-    plt.ylabel('Jumlah Kalimat')
-    plt.title('Distribusi Sentimen Artikel')
-    plt.tight_layout()
-    plt.show()
-
     return df_artikel
 
 def analisis_sentimen_ig(comments:list) -> pd.DataFrame:
     id_results = []
-
-    print("Starting sentiment analysis...")
 
     for txt in comments:
         try:
@@ -300,14 +288,14 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
     for txt in df_neg_artikel["sentence"]:
         neg_words_artikel.extend([w for w in txt.lower().split()
                                   if w not in Stop_Words and w.isalpha() and len(w) > 3])
-    print("\nTop keyword di ARTIKEL BERITA - NEGATIF:")
+    print("\nTop Keyword di Artikel - NEGATIF:")
     print(Counter(neg_words_artikel).most_common(15))
 
     pos_words_artikel = []
     for txt in df_pos_artikel["sentence"]:
         pos_words_artikel.extend([w for w in txt.lower().split()
                                   if w not in Stop_Words and w.isalpha() and len(w) > 3])
-    print("\nTop keyword di ARTIKEL BERITA - POSITIF:")
+    print("\nTop Keyword di Artikel - POSITIF:")
     print(Counter(pos_words_artikel).most_common(15))
 
     # Keyword dari komentar IG
@@ -332,28 +320,29 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
     for txt in df_neg["text"]:
         neg_words.extend([w for w in txt.lower().split()
                           if w not in Stop_Words and w.isalpha() and len(w) > 3])
-    print("\nTop keyword di komentar NEGATIF:")
+    print("\nTop Keyword di Komentar Instagram - NEGATIF:")
     print(Counter(neg_words).most_common(15))
 
     pos_words = []
     for txt in df_pos["text"]:
         pos_words.extend([w for w in txt.lower().split()
                           if w not in Stop_Words and w.isalpha() and len(w) > 3])
-    print("\nTop keyword di komentar POSITIF:")
+    print("\nTop Keyword di Komentar Instagram - POSITIF:")
     print(Counter(pos_words).most_common(15))
 
     sentiment_dist = df_ig["sentiment"].value_counts(normalize=True).mul(100).round(1)
     sentiment_artikel = df_artikel["sentiment"].value_counts(normalize=True).mul(100).round(1)
-    print(f"   Sentimen publik (IG): {sentiment_dist.to_dict()}")
-    print(f"   Sentimen artikel     : {sentiment_artikel.to_dict()}")
-    print(f"   Keyword HANYA di media  : {list(only_media)[:10]}")
-    print(f"   Keyword HANYA di publik : {list(only_publik)[:10]}")
+    print("\n" + "="*55)
+    print(f"Sentimen Instagram (%): {sentiment_dist.to_dict()}")
+    print(f"Sentimen Artikel   (%): {sentiment_artikel.to_dict()}")
+    print(f"Keyword di Artikel    : {list(only_media)[:10]}")
+    print(f"Keyword di Instagram  : {list(only_publik)[:10]}")
 
     # Bar chart komparatif artikel vs IG — untuk slide PPT
     artikel_sentiment = df_artikel["sentiment"].value_counts()
     ig_sentiment      = df_ig["sentiment"].value_counts()
 
-    labels   = ["negative", "positive"]
+    labels   = ["negative", 'neutral',  "positive"]
     artikel_vals = [artikel_sentiment.get(l, 0) for l in labels]
     ig_vals      = [ig_sentiment.get(l, 0) for l in labels]
 
@@ -378,7 +367,6 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
         "only_in_public": pd.Series(list(only_publik)[:15])
     })
     df_gap.to_csv("gap_analysis.csv", index=False, encoding="utf-8-sig")
-    print("File Saved: gap_analysis.csv")
 
     return sentiment_dist, sentiment_artikel, only_media, only_publik
 
@@ -398,5 +386,5 @@ if __name__ == "__main__":
     print("PIPELINE SELESAI. File yang dihasilkan:")
     print("Sentiment_Artikel.csv")
     print("Sentiment_Instagram.csv")
-    print("gap_analysis.csv")
+    print("Gap_Analysis.csv")
     print("="*55)
