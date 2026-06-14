@@ -247,8 +247,7 @@ def analisis_sentimen_artikel(paragraphs: list) -> pd.DataFrame:
             print(f"⚠️ Gagal: {e}")
 
     df_artikel = pd.DataFrame(results)
-    df_artikel.to_csv("artikel_sentiment.csv", index=False, encoding="utf-8-sig")
-    print("\nFile saved: artikel_sentiment.csv")
+    df_artikel.to_csv("Sentiment_Artikel.csv", index=False, encoding="utf-8-sig")
 
     counts = df_artikel['sentiment'].value_counts()
     plt.figure(figsize=(6, 4))
@@ -278,13 +277,13 @@ def analisis_sentimen_ig(comments:list) -> pd.DataFrame:
             print(f"Gagal memproses: '{txt}' | Error: {e}")
 
     df_ig = pd.DataFrame(id_results)
-    df_ig.to_csv("comments_id_sentiment.csv", index=False, encoding="utf-8-sig")
-    print("File saved: comments_id_sentiment.csv")
+    df_ig.to_csv("Sentiment_Instagram.csv", index=False, encoding="utf-8-sig")
     return df_ig
 
 def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
     print("\nGap Analysis: Media vs Publik...")
 
+    # Keyword dari artikel
     all_artikel_words = []
     for txt in df_artikel["sentence"]:
         words = [w for w in txt.lower().split()
@@ -292,7 +291,24 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
         all_artikel_words.extend(words)
 
     artikel_freq = Counter(all_artikel_words)
-    media_words  = set([w for w, _ in artikel_freq.most_common(20)])
+    media_words = set([w for w, _ in artikel_freq.most_common(20)])
+
+    df_neg_artikel = df_artikel[df_artikel["sentiment"] == "negative"]
+    df_pos_artikel = df_artikel[df_artikel["sentiment"] == "positive"]
+
+    neg_words_artikel = []
+    for txt in df_neg_artikel["sentence"]:
+        neg_words_artikel.extend([w for w in txt.lower().split()
+                                  if w not in Stop_Words and w.isalpha() and len(w) > 3])
+    print("\nTop keyword di ARTIKEL BERITA - NEGATIF:")
+    print(Counter(neg_words_artikel).most_common(15))
+
+    pos_words_artikel = []
+    for txt in df_pos_artikel["sentence"]:
+        pos_words_artikel.extend([w for w in txt.lower().split()
+                                  if w not in Stop_Words and w.isalpha() and len(w) > 3])
+    print("\nTop keyword di ARTIKEL BERITA - POSITIF:")
+    print(Counter(pos_words_artikel).most_common(15))
 
     # Keyword dari komentar IG
     all_ig_words = []
@@ -301,17 +317,12 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
                  if w not in Stop_Words and w.isalpha() and len(w) > 3]
         all_ig_words.extend(words)
 
+    # Keyword dari Instagram
     ig_freq      = Counter(all_ig_words)
     publik_words = set([w for w, _ in ig_freq.most_common(20)])
 
-    only_media   = media_words - publik_words
-    only_publik  = publik_words - media_words
-
-    # Sentimen publik
-    sentiment_dist = df_ig["sentiment"].value_counts(normalize=True).mul(100).round(1)
-    print(f"\n   Sentimen publik (IG): {sentiment_dist.to_dict()}")
-    print(f"   Keyword HANYA di media  : {list(only_media)[:10]}")
-    print(f"   Keyword HANYA di publik : {list(only_publik)[:10]}")
+    only_media   = media_words - publik_words #apakah bisa dipindah
+    only_publik  = publik_words - media_words #apakah bisa dipindah
 
     df_neg = df_ig[df_ig["sentiment"] == "negative"]
     df_pos = df_ig[df_ig["sentiment"] == "positive"]
@@ -331,7 +342,14 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
     print("\nTop keyword di komentar POSITIF:")
     print(Counter(pos_words).most_common(15))
 
-    # ✅ Bar chart komparatif artikel vs IG — untuk slide PPT
+    sentiment_dist = df_ig["sentiment"].value_counts(normalize=True).mul(100).round(1)
+    sentiment_artikel = df_artikel["sentiment"].value_counts(normalize=True).mul(100).round(1)
+    print(f"   Sentimen publik (IG): {sentiment_dist.to_dict()}")
+    print(f"   Sentimen artikel     : {sentiment_artikel.to_dict()}")
+    print(f"   Keyword HANYA di media  : {list(only_media)[:10]}")
+    print(f"   Keyword HANYA di publik : {list(only_publik)[:10]}")
+
+    # Bar chart komparatif artikel vs IG — untuk slide PPT
     artikel_sentiment = df_artikel["sentiment"].value_counts()
     ig_sentiment      = df_ig["sentiment"].value_counts()
 
@@ -378,7 +396,7 @@ if __name__ == "__main__":
 
     print("\n" + "="*55)
     print("PIPELINE SELESAI. File yang dihasilkan:")
-    print("artikel_keywords.csv")
-    print("instagram_sentimen.csv")
+    print("Sentiment_Artikel.csv")
+    print("Sentiment_Instagram.csv")
     print("gap_analysis.csv")
     print("="*55)
