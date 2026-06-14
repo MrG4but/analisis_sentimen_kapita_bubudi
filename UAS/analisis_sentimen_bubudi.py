@@ -380,7 +380,7 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
     df_gap.to_csv("gap_analysis.csv", index=False, encoding="utf-8-sig")
     print("File Saved: gap_analysis.csv")
 
-    return sentiment_dist, only_media, only_publik
+    return sentiment_dist, sentiment_artikel, only_media, only_publik
 
 if __name__ == "__main__":
     # 1. Artikel berita → keyword + graph
@@ -392,7 +392,7 @@ if __name__ == "__main__":
     df_ig    = analisis_sentimen_ig(komentar)
 
     # 3. Gap analysis
-    sentiment_dist, only_media, only_publik = gap_analysis(df_artikel, df_ig)
+    sentiment_dist, sentiment_artikel, only_media, only_publik = gap_analysis(df_artikel, df_ig)
 
     print("\n" + "="*55)
     print("PIPELINE SELESAI. File yang dihasilkan:")
