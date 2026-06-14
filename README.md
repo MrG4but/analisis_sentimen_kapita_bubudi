@@ -9,7 +9,7 @@ Cara menjalankan :
 5. Setelah selesai, kode akan menjalankan Analisis Sentimen Instagram
 6. Setelah login Instagram, selesaikan Captcha/2FA terlebih dahulu jika ada
 7. Setelah menyelesaikan Captcha/2FA dan masuk ke halaman utama, tekan enter di terminal agar lanjut ke postingan yang dituju
-8. Tunggu kode mengambil semua komentar sekitar 8 menit (Jangan minimize tab Instagram Reelsnya)
+8. Tunggu kode mengambil semua komentar sekitar 15 menit (Jangan minimize tab Instagram Reelsnya)
 9. Jika semua jumlah komentar sudah ditampilkan di terminal, tekan Enter pada terminal agar lanjut ke Gap Analysis
 10. Jika berhasil, maka akan timbul grafik bar chart perbandingan sentimen pada layar dan Gap Analysis pada terminal
 11. Tutup layer grafik bar chart lalu tunggu sekitar 5 menit agar seluruh CSV terbuat
