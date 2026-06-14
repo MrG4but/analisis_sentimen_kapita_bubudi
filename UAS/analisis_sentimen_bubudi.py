@@ -339,12 +339,12 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
     print(f"Keyword di Instagram  : {list(only_publik)[:10]}")
 
     # Bar chart komparatif artikel vs IG — untuk slide PPT
-    artikel_sentiment = df_artikel["sentiment"].value_counts()
-    ig_sentiment      = df_ig["sentiment"].value_counts()
+    # artikel_sentiment = df_artikel["sentiment"].value_counts()
+    # ig_sentiment      = df_ig["sentiment"].value_counts()
 
     labels   = ["negative", 'neutral',  "positive"]
-    artikel_vals = [artikel_sentiment.get(l, 0) for l in labels]
-    ig_vals      = [ig_sentiment.get(l, 0) for l in labels]
+    artikel_vals = [df_artikel['sentiment'].value_counts(normalize=True).get(l, 0) * 100 for l in labels]
+    ig_vals = [df_ig['sentiment'].value_counts(normalize=True).get(l, 0) * 100 for l in labels]
 
     x     = range(len(labels))
     width = 0.35
@@ -354,7 +354,8 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
     ax.bar([i + width/2 for i in x], ig_vals,      width, label="Komentar IG",    color="#DD8452")
     ax.set_xticks(list(x))
     ax.set_xticklabels(labels)
-    ax.set_ylabel("Jumlah")
+    ax.set_ylabel("Persentase (%)")
+    ax.set_ylim(0, 100)
     ax.set_title("Perbandingan Sentimen: Artikel Berita vs Komentar Instagram")
     ax.legend()
     plt.tight_layout()
