@@ -1,11 +1,13 @@
 Yang Dibutuhkan :
 - Akun Instagram 
+- Akun Hugging Face (dapat diakses memlalui huggingface.co)
 
 Cara menjalankan :
-
-1. Masuk ke file .env dan isi IG_USER, IG_PASSWORD dengan akun Instagram anda sendiri
-2. Run file analisis_sentimen_bubudi.py
-3. Kode akan menjalankan Analisis Sentimen Artikel terlebih dahulu
+1. Sebelum masuk ke file, siapkan akun hugging face terlebih dahulu, kemudian masuk profile -> access tokens
+   -> Create new token -> copy token
+2. Masuk ke file .env dan isi IG_USER, IG_PASSWORD dengan akun Instagram anda sendiri dan masukkan token yang sudah dibuat ke HF_TOKEN.
+3. Run file analisis_sentimen_bubudi.py
+4. Kode akan menjalankan Analisis Sentimen Artikel terlebih dahulu
 5. Setelah selesai, kode akan menjalankan Analisis Sentimen Instagram
 6. Setelah login Instagram, selesaikan Captcha/2FA terlebih dahulu jika ada
 7. Setelah menyelesaikan Captcha/2FA dan masuk ke halaman utama, tekan enter di terminal agar lanjut ke postingan yang dituju
