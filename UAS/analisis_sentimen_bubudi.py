@@ -354,7 +354,7 @@ def gap_analysis(df_artikel: pd.DataFrame, df_ig: pd.DataFrame):
 
     labels = ["negative", "neutral", "positive"]
     artikel_vals = [artikel_sentiment.get(l, 0) for l in labels]
-    ig_vals = [ig_sentimesnt.get(l, 0) for l in labels]
+    ig_vals = [ig_sentiment.get(l, 0) for l in labels]
 
     x     = range(len(labels))
     width = 0.35
